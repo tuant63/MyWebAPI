@@ -3,21 +3,52 @@ import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users } from "lucide-react";
-
 const Sidebar = () => {
   const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
-
-  const { onlineUsers } = useAuthStore();
+  const [searchTerm, setSearchTerm] = useState("");
+  const { onlineUsers,socket  } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
-
+  const [unreadMessages, setUnreadMessages] = useState({});
   useEffect(() => {
     getUsers();
   }, [getUsers]);
+  // Thêm effect để lắng nghe tin nhắn mới
+  useEffect(() => {
+    if (!socket) return;
 
+    socket.on("newMessage", (message) => {
+      // Kiểm tra nếu người dùng hiện tại không phải là người trong cuộc trò chuyện 
+      if (message.senderId !== selectedUser?._id && message.receiverId !== selectedUser?._id) {
+        setUnreadMessages((prev) => ({
+          ...prev,
+          [message.senderId]: (prev[message.senderId] || 0) + 1,
+          [message.receiverId]: (prev[message.receiverId] || 0) + 1
+        }));
+      }
+    });
+  
+
+    return () => {
+      if (socket) {
+        socket.off("newMessage");
+      }
+    };
+  }, [selectedUser, socket]);
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    setUnreadMessages((prev) => ({
+      ...prev,
+      [user._id]: 0
+    }));
+  };
   const filteredUsers = showOnlineOnly
-    ? users.filter((user) => onlineUsers.includes(user._id))
-    : users;
-
+    ? users.filter((user) => 
+        onlineUsers.includes(user._id) && 
+        user.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : users.filter((user) => 
+        user.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
@@ -26,6 +57,15 @@ const Sidebar = () => {
         <div className="flex items-center gap-2">
           <Users className="size-6" />
           <span className="font-medium hidden lg:block">Contacts</span>
+        </div>
+        <div className="mt-3 hidden lg:block">
+          <input
+            type="text"
+            placeholder="Search contacts..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input input-sm input-bordered w-full"
+          />
         </div>
         {/* TODO: Online filter toggle */}
         <div className="mt-3 hidden lg:flex items-center gap-2">
@@ -46,7 +86,7 @@ const Sidebar = () => {
         {filteredUsers.map((user) => (
           <button
             key={user._id}
-            onClick={() => setSelectedUser(user)}
+            onClick={() => handleSelectUser(user)}
             className={`
               w-full p-3 flex items-center gap-3
               hover:bg-base-300 transition-colors
@@ -64,6 +104,12 @@ const Sidebar = () => {
                   className="absolute bottom-0 right-0 size-3 bg-green-500 
                   rounded-full ring-2 ring-zinc-900"
                 />
+              )}
+              {unreadMessages[user._id] > 0 && (
+                <span className="absolute -top-1 -right-1 size-5 bg-red-500 rounded-full 
+                  flex items-center justify-center text-xs text-white font-medium">
+                  {unreadMessages[user._id]}
+                </span>
               )}
             </div>
 

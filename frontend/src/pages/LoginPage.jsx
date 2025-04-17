@@ -3,7 +3,6 @@ import { useAuthStore } from "../store/useAuthStore";
 import AuthImagePattern from "../components/AuthImagePattern";
 import { Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from "lucide-react";
-
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -11,12 +10,13 @@ const LoginPage = () => {
     password: "",
   });
   const { login, isLoggingIn } = useAuthStore();
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     login(formData);
   };
-
+  
+  
   return (
     <div className="h-screen grid lg:grid-cols-2">
       {/* Left Side - Form */}
@@ -95,6 +95,17 @@ const LoginPage = () => {
                 "Sign in"
               )}
             </button>
+            <div className="divider">OR</div>
+
+{/* Thêm nút đăng nhập Google */}
+<button
+  type="button"
+  onClick={() => window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`}
+  className="btn btn-outline w-full flex items-center gap-2"
+>
+  <img src="/google.png" alt="Google" className="w-5 h-5" />
+  Sign in with Google
+</button>
           </form>
 
           <div className="text-center">
@@ -105,6 +116,7 @@ const LoginPage = () => {
               </Link>
             </p>
           </div>
+        
         </div>
       </div>
 

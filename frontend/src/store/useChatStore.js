@@ -63,6 +63,19 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
   },
-
+  deleteConversation: async (userId) => {
+    try {
+      await axiosInstance.delete(`/messages/conversation/${userId}`);
+      
+      // Cập nhật state để ẩn tin nhắn đã xóa
+      set((state) => ({
+        messages: []
+      }));
+      
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      throw error;
+    }
+  },
   setSelectedUser: (selectedUser) => set({ selectedUser }),
 }));

@@ -1,8 +1,10 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import DeletedConversation from '../models/deletedConversation.model.js';
 
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
+
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -21,16 +23,29 @@ export const getMessages = async (req, res) => {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
 
-    const messages = await Message.find({
+    // Kiểm tra xem người dùng đã xóa cuộc trò chuyện chưa
+    const deletedConversation = await DeletedConversation.findOne({
+      userId: myId,
+      otherUserId: userToChatId
+    });
+
+    let query = {
       $or: [
         { senderId: myId, receiverId: userToChatId },
-        { senderId: userToChatId, receiverId: myId },
-      ],
-    });
+        { senderId: userToChatId, receiverId: myId }
+      ]
+    };
+
+    // Nếu người dùng đã xóa cuộc trò chuyện, chỉ lấy tin nhắn sau thời điểm xóa
+    if (deletedConversation) {
+      query.createdAt = { $gt: deletedConversation.deletedAt };
+    }
+
+    const messages = await Message.find(query).sort({ createdAt: 1 });
 
     res.status(200).json(messages);
   } catch (error) {
-    console.log("Error in getMessages controller: ", error.message);
+    console.error("Error in getMessages controller:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -65,6 +80,25 @@ export const sendMessage = async (req, res) => {
     res.status(201).json(newMessage);
   } catch (error) {
     console.log("Error in sendMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const deleteConversation = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user._id;
+
+    // Lưu thông tin về cuộc trò chuyện đã xóa
+    const deletedConversation = new DeletedConversation({
+      userId: currentUserId,
+      otherUserId: userId,
+      deletedAt: new Date()
+    });
+    await deletedConversation.save();
+
+    res.status(200).json({ message: "Conversation deleted successfully" });
+  } catch (error) {
+    console.error("Error in deleteConversation:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
