@@ -9,7 +9,6 @@ export const useChatStore = create((set, get) => ({
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
-
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
@@ -75,6 +74,23 @@ export const useChatStore = create((set, get) => ({
     } catch (error) {
       console.error("Error deleting conversation:", error);
       throw error;
+    }
+  },
+  blockUser: async (userId) => {
+    try {
+      await axiosInstance.post(`/messages/block/${userId}`);
+      toast.success("Đã chặn người dùng");
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Không thể chặn người dùng");
+    }
+  },
+
+  unblockUser: async (userId) => {
+    try {
+      await axiosInstance.delete(`/messages/block/${userId}`);
+      toast.success("Đã bỏ chặn người dùng");
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Không thể bỏ chặn người dùng");
     }
   },
   setSelectedUser: (selectedUser) => set({ selectedUser }),

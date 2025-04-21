@@ -1,16 +1,35 @@
-import { useRef, useState } from "react";
+import { useRef, useState,useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { Image, Send, X,Smile } from "lucide-react";
 import toast from "react-hot-toast";
 import EmojiPicker from "emoji-picker-react"
 import ImageModal from "./ImageModal"; // Import the ImageModal component
+import { axiosInstance } from "../lib/axios";
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const { sendMessage,selectedUser} = useChatStore();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false); 
   const [showImageModal, setShowImageModal] = useState(false);
+  const [blockStatus, setBlockStatus] = useState({
+    isBlockedByMe: false,
+    isBlockedByOther: false
+  });
+  useEffect(() => {
+    const checkBlockStatus = async () => {
+      try {
+        const res = await axiosInstance.get(`/messages/block-status/${selectedUser._id}`);
+        setBlockStatus(res.data);
+      } catch (error) {
+        console.error("Error checking block status:", error);
+      }
+    };
+
+    if (selectedUser) {
+      checkBlockStatus();
+    }
+  }, [selectedUser]);
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file.type.startsWith("image/")) {
@@ -55,6 +74,18 @@ const MessageInput = () => {
 
   return (
     <div className="p-4 w-full">
+      {blockStatus.isBlockedByMe && (
+        <div className="text-center py-2 bg-red-50 text-red-600 rounded mb-2">
+          Bạn đã chặn người này. Bỏ chặn để tiếp tục trò chuyện.
+        </div>
+      )}
+      
+      {blockStatus.isBlockedByOther && (
+        <div className="text-center py-2 bg-red-50 text-red-600 rounded mb-2">
+          Bạn đã bị người này chặn.
+        </div>
+      )}
+
       {/* Image Preview */}
       {imagePreview && (
         <div className="mb-3 flex items-center gap-2">
@@ -84,10 +115,18 @@ const MessageInput = () => {
           <input
             type="text"
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
-            placeholder="Type a message..."
+            placeholder={
+              blockStatus.isBlockedByMe 
+                ? "Bỏ chặn để nhắn tin" 
+                : blockStatus.isBlockedByOther 
+                ? "Bạn đã bị chặn" 
+                : "Nhập tin nhắn..."
+            }
             value={text}
             onChange={(e) => setText(e.target.value)}
+            disabled={blockStatus.isBlockedByMe || blockStatus.isBlockedByOther}
           />
+          
   
           {/* Hidden File Input */}
           <input
@@ -141,12 +180,16 @@ const MessageInput = () => {
   
         {/* Send Button */}
         <button
-          type="submit"
-          className="btn btn-circle btn-sm sm:btn-md bg-primary hover:bg-primary/90"
-          disabled={!text.trim() && !imagePreview}
-        >
-          <Send size={20} className="text-white" />
-        </button>
+            type="submit"
+            className="btn btn-circle btn-sm sm:btn-md bg-primary hover:bg-primary/90"
+            disabled={
+              (!text.trim() && !imagePreview) || 
+              blockStatus.isBlockedByMe || 
+              blockStatus.isBlockedByOther
+            }
+          >
+            <Send size={20} className="text-white" />
+          </button>
       </form>
     </div>
   );

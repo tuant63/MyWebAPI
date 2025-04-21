@@ -9,10 +9,12 @@ import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import session from 'express-session';
 import passport from './config/passport.js';
+import { json, urlencoded } from 'express';
 dotenv.config();
 const PORT = process.env.PORT;
 const __dirname = path.resolve();
-
+app.use(json({ limit: '10mb' }));
+app.use(urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(

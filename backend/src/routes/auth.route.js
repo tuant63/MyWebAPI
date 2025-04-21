@@ -9,9 +9,7 @@ import {
 import { protectRoute } from "../middleware/auth.middleware.js";
 import passport from "passport";
 import { generateToken } from "../lib/utils.js";
-
 const router = express.Router();
-
 // Auth routes
 router.post("/signup", signup);
 router.post("/login", login);
@@ -40,7 +38,6 @@ router.get(
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
     // Redirect to frontend with cookie already set
     res.redirect(process.env.CLIENT_URL);
   }

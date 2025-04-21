@@ -42,6 +42,12 @@ const userSchema = new mongoose.Schema(
       type: Boolean, 
       default: false 
     },
+    blockedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      }
+    ],
     // Thêm thông tin bổ sung từ Google
     givenName: String,
     familyName: String,
