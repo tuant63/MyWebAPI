@@ -15,7 +15,6 @@ const Sidebar = () => {
   // Thêm effect để lắng nghe tin nhắn mới
   useEffect(() => {
     if (!socket) return;
-
     socket.on("newMessage", (message) => {
       // Kiểm tra nếu người dùng hiện tại không phải là người trong cuộc trò chuyện 
       if (message.senderId !== selectedUser?._id && message.receiverId !== selectedUser?._id) {

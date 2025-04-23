@@ -2,7 +2,6 @@ import { X } from "lucide-react";
 
 const ImageModal = ({ imageSrc, onClose }) => {
   if (!imageSrc) return null;
-
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
@@ -27,5 +26,4 @@ const ImageModal = ({ imageSrc, onClose }) => {
     </div>
   );
 };
-
 export default ImageModal;

@@ -8,7 +8,7 @@ import { axiosInstance } from "../lib/axios";
 const ChatHeader = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
-  const { selectedUser, setSelectedUser, deleteConversation, blockUser, unblockUser } = useChatStore();
+  const { selectedUser, setSelectedUser, deleteConversation, blockUser, unblockUser,} = useChatStore();
   const { onlineUsers } = useAuthStore();
   // Thêm state cho block status
   const [blockStatus, setBlockStatus] = useState({
@@ -36,19 +36,23 @@ const ChatHeader = () => {
     try {
       if (blockStatus.isBlockedByMe) {
         await unblockUser(selectedUser._id);
-        setBlockStatus(prev => ({...prev, isBlockedByMe: false}));
-        toast.success("Đã bỏ chặn người dùng");
+        toast.success("Đã bỏ chặn");
+  
+        setBlockStatus(prev => ({ ...prev, isBlockedByMe: false }));
       } else {
-        if (window.confirm("Bạn có chắc muốn chặn người dùng này?")) {
-          await blockUser(selectedUser._id);
-          setBlockStatus(prev => ({...prev, isBlockedByMe: true}));
-          toast.success("Đã chặn người dùng");
-        }
+        const confirm = window.confirm("Bạn có chắc muốn chặn người này?");
+        if (!confirm) return;
+  
+        await blockUser(selectedUser._id);
+        toast.success("Đã chặn người dùng");
+  
+        setBlockStatus(prev => ({ ...prev, isBlockedByMe: true }));
       }
     } catch (error) {
-      toast.error("Không thể thực hiện thao tác này");
+      toast.error("Thao tác thất bại");
     }
   };
+  
 
   
   const handleDeleteConversation = async () => {
